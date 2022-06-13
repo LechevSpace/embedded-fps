@@ -1,9 +1,10 @@
-# embedded-fps
+# `embedded-fps`
 [![sponsor-us]](https://github.com/sponsors/LechevSpace)&ensp;[![crates-io]](https://crates.io/crates/embedded-fps)&ensp;[![docs-rs]](https://docs.rs/embedded-fps)
-## Frames Per Second counter for embedded devices.
+
+## Frames Per Second counter for embedded devices
 
 Create an `FPS` struct by passing the `MAX_FPS` (maximum frames per seconds)
-that you expect to hit and a [`embedded_time`][embedded-time-docs]`::Clock` implementation.
+that you expect to hit and a [`embedded_time`][embedded-time-docs] `Clock` implementation.
 
 [embedded-time-docs]: https://docs.rs/embedded-time/
 [crates-io]: https://img.shields.io/crates/v/embedded-fps?logo=rust&style=for-the-badge
@@ -34,9 +35,20 @@ You can run this example from the `examples` directory using:
 
 ## Crate features
 
-- `std` - enables [`StdClock`] - a [`Clock`] implementation using [`std`] for usage on a host machine.
+- `std` - enables `StdClock` - a `Clock` implementation using `std` for usage on a host machine.
 
-[`StdClock`]: crate::StdClock
+## License
+
+Licensed under either of [Apache License, Version 2.0](./LICENSE-APACHE)
+or [MIT license](./LICENSE-MIT) at your option.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this project by you, as defined in the Apache-2.0 license,
+shall be dual licensed as above, without any additional terms or conditions.
+
 [`embedded-graphics`]: https://crates.io/crates/embedded-graphics
 [`embedded-graphics-simulator`]: https://crates.io/crates/embedded-graphics-simulator
 [simulator-docs]: https://docs.rs/embedded-graphics-simulator/latest/embedded_graphics_simulator/#setup
+[`StdClock`]: crate::StdClock
