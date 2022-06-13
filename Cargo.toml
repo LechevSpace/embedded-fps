@@ -1,0 +1,36 @@
+[package]
+name = "embedded-fps"
+version = "0.1.0"
+authors = ["Lechev.space <dev@lechev.space>", "Lachezar Lechev"]
+description = ""
+categories = ["embedded", "no-std", "graphics"]
+
+keywords = ["graphics", "embedded", "no_std", "frames per second", "fps"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/LechevSpace/embedded-fps"
+documentation = "https://docs.rs/embedded-fps"
+
+edition = "2021"
+# Because of `holodeque` and the `array_map` rust feature that was introduced in 1.55
+# and edition 2021 requires at least 1.56
+rust-version = "1.56"
+
+[features]
+
+default = []
+std = []
+
+[[example]]
+name = "fps_counter"
+required-features = ["std"]
+
+[[example]]
+name = "embedded_graphics"
+required-features = ["std"]
+
+[dependencies]
+embedded-time = "0.12"
+holodeque = {version = "0.2", default-features = false, git = "https://github.com/elpiel/holodeque", branch = "derive-copy-for-array-deque"}
+# used for the `embedded-graphics` example
+embedded-graphics-simulator = "0.3"
+embedded-graphics = "0.7"
