@@ -110,193 +110,24 @@
 // Rustdoc lints
 #![deny(rustdoc::broken_intra_doc_links)]
 // Rustc lints
-#![deny(missing_docs, unused_imports)]
+#![deny(
+    missing_debug_implementations,
+    missing_docs,
+    rust_2018_idioms,
+    unreachable_pub,
+    unused_imports
+)]
 // adds `#[no_std]` attribute if the `std` feature is not enabled
 #![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
-use embedded_time::{duration::Seconds, Clock, Instant};
-use holodeque::ArrayDeque;
+pub use fps::{FPS, Error};
+
+mod fps;
 
 #[cfg(feature = "std")]
 #[doc(inline)]
 pub use std_clock::StdClock;
 
-/// Measures Frames Per Second (FPS).
-///
-/// `MAX_FPS` - Defines the maximum FPS that you expect to measure.
-#[derive(Debug, Clone)]
-pub struct FPS<const MAX_FPS: usize, C: Clock> {
-    /// The last registered frames.
-    last_second_frames: ArrayDeque<Option<Instant<C>>, MAX_FPS>,
-    /// The embedded [`Clock`] that will be used to track the passed second.
-    clock: C,
-}
-
-impl<const MAX_FPS: usize, C: Clock> FPS<MAX_FPS, C> {
-    /// Creates a new Frames Per Second counter.
-    pub fn new(clock: C) -> FPS<MAX_FPS, C> {
-        FPS {
-            last_second_frames: ArrayDeque::<_, MAX_FPS>::new(),
-            clock,
-        }
-    }
-
-    /// Adds another frame tick and returns the current Frames Pre Second.
-    ///
-    /// # Panics
-    ///
-    /// When [`Clock::try_now()`] returns an error or if the `MAX_FPS` is reached.
-    pub fn tick(&mut self) -> usize {
-        self.try_tick().unwrap()
-    }
-
-    /// Adds another frame tick and returns the current Frames Pre Second.
-    ///
-    /// This method will not panic if the `MAX_FPS` is reached,
-    /// instead it will just return the `MAX_FPS` value (capping it in a nutshell).
-    ///
-    /// # Panics
-    ///
-    /// If [`Clock::try_now()`] returns an error.
-    pub fn tick_max(&mut self) -> usize {
-        self.try_tick_max().unwrap()
-    }
-
-    /// Adds another frame tick and returns the current Frames Pre Second.
-    ///
-    /// This method will not return an error if the `MAX_FPS` is reached,
-    /// instead it will just return the `MAX_FPS` value (capping it in a nutshell).
-    pub fn try_tick_max(&mut self) -> Result<usize, Error> {
-        match self.try_tick() {
-            Ok(fps) => Ok(fps),
-            Err(Error::MaxFPS(_)) => Ok(MAX_FPS),
-            Err(err) => Err(err),
-        }
-    }
-
-    /// Adds another frame tick and returns the current Frames Pre Second.
-    ///
-    /// # Panics
-    ///
-    /// When [`Clock::try_now()`] returns an error or if the `MAX_FPS` is reached.
-    pub fn try_tick(&mut self) -> Result<usize, Error> {
-        let now = self.clock.try_now().map_err(Error::Clock)?;
-        let a_second_ago = now - Seconds(1);
-
-        while self
-            .last_second_frames
-            .front()
-            .copied()
-            .flatten()
-            .map_or(false, |tick| tick < a_second_ago)
-        {
-            self.last_second_frames.pop_front();
-        }
-
-        self.last_second_frames
-            .push_back(Some(now))
-            .map_err(|_cap_err| Error::MaxFPS(MAX_FPS))?;
-
-        // return the frames per second
-        Ok(self.last_second_frames.len())
-    }
-}
-
-impl<const MAX_FPS: usize, C> Default for FPS<MAX_FPS, C>
-where
-    C: Clock + Default,
-{
-    fn default() -> Self {
-        Self::new(C::default())
-    }
-}
-
-#[derive(Debug)]
-/// The errors that [`FPS`] can return.
-///
-/// Keep in mind that [`Error::MaxFPS`] will trigger panic on [`FPS::tick`]
-/// or be returned as an error on [`FPS::try_tick`].
-pub enum Error {
-    /// The clock returned an error when calling [`Clock::try_now`].
-    Clock(embedded_time::clock::Error),
-    /// The maximum reading of Frames per second was reached
-    /// The internal deque reached it's capacity.
-    ///
-    /// Increase the `MAX_FPS` to avoid this problem.
-    MaxFPS(usize),
-}
-
 #[cfg(feature = "std")]
-mod std_clock {
-    use std::time::Instant as StdInstant;
-
-    use embedded_time::{clock::Error, rate::Fraction, Clock, Instant as EmbeddedInstant};
-
-    /// A Standard clock based on [`std`].
-    ///
-    /// It takes the [`Instant::elapsed()`] time and uses nanoseconds converted to [`u64`].
-    /// This still leaves us with ~594 years of representable time
-    ///
-    /// [`Instant::elapsed()`]: std::time::Instant::elapsed()
-    #[derive(Debug, Clone, Copy)]
-    pub struct StdClock(StdInstant);
-
-    impl Default for StdClock {
-        fn default() -> Self {
-            Self::new()
-        }
-    }
-
-    impl StdClock {
-        /// Creates a new [`StdClock`].
-        /// Internally it calls [`Instant::now()`].
-        ///
-        /// [`Instant::now()`]: std::time::Instant::now()
-        pub fn new() -> Self {
-            Self(StdInstant::now())
-        }
-    }
-
-    impl Clock for StdClock {
-        type T = u64;
-
-        const SCALING_FACTOR: Fraction = Fraction::new(1, 1_000_000_000);
-
-        fn try_now(&self) -> Result<EmbeddedInstant<Self>, Error> {
-            // discarding the upper u64 still leaves us with ~594 years of representable time
-            Ok(EmbeddedInstant::new(self.0.elapsed().as_nanos() as u64))
-        }
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use std::thread::sleep;
-
-        use embedded_time::{
-            duration::{Extensions, Milliseconds},
-            Clock,
-        };
-
-        use super::StdClock;
-
-        #[test]
-        fn it_creates_std_instant_from_milliseconds_clock() {
-            let clock = StdClock::new();
-
-            sleep(std::time::Duration::from_millis(400));
-
-            let start = clock.try_now().unwrap();
-            // wait 1.5 seconds
-            sleep(std::time::Duration::from_millis(1_600));
-            let end = clock.try_now().unwrap();
-
-            let elapsed = Milliseconds::<u64>::try_from(end - start).unwrap();
-
-            let lower_bound = Milliseconds::<u64>::try_from(1_599_u32.milliseconds()).unwrap();
-            assert!(elapsed > lower_bound);
-
-            let upper_bound = Milliseconds::<u64>::try_from(2_000_u32.milliseconds()).unwrap();
-            assert!(elapsed < upper_bound);
-        }
-    }
-}
+mod std_clock;
