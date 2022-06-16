@@ -33,6 +33,11 @@ required-features = ["std"]
 name = "embedded_graphics"
 required-features = ["std"]
 
+[[example]]
+# This example is meant to ease the recording of the window for the GIF in the docs
+name = "eg_recording"
+required-features = ["std"]
+
 [dependencies]
 embedded-time = "0.12"
 heapless = {version = "0.7", default-features = false }
