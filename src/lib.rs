@@ -5,6 +5,8 @@
 //! Create an [`FPS`] struct by passing the `MAX_FPS` (maximum frames per seconds)
 //! that you expect to hit and a [`embedded_time::Clock`] implementation.
 //!
+//! ![FPS counter with Embedded-graphics & simulator][eg_recording]
+//!
 //! # Examples
 //!
 //! ## Frames Per Second with a simple for-loop
@@ -44,7 +46,7 @@
 //!
 //! You can also run this example from the `examples` directory using:
 //!
-//! `cargo run --features=std --example fps_counter`
+//! `cargo run --features=std --example embedded_graphics`
 //!
 //! ```no_run
 //! use embedded_fps::{StdClock, FPS};
@@ -99,6 +101,8 @@
 //!
 //! - `std` - enables [`StdClock`] - a [`Clock`] implementation using [`std`] for usage on a host machine.
 //!
+//! [eg_recording]: https://raw.githubusercontent.com/LechevSpace/embedded-fps/685db97aedbc3fcbf3ab135888d1181a51dec421/assets/eg_recording.gif
+//! [`Clock`]: embedded_time::Clock
 //! [`StdClock`]: crate::StdClock
 //! [`embedded-graphics`]: https://crates.io/crates/embedded-graphics
 //! [`embedded-graphics-simulator`]: https://crates.io/crates/embedded-graphics-simulator
